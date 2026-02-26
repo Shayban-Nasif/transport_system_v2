@@ -568,97 +568,95 @@
     </div>
 
     
-    <script>
-        // ==================== FIREBASE CONFIG ====================
-        // Import Firebase and initialize
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getMessaging } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
-            authDomain: "maktab-transport.firebaseapp.com",
-            projectId: "maktab-transport",
-            storageBucket: "maktab-transport.firebasestorage.app",
-            messagingSenderId: "575357634901",
-            appId: "1:575357634901:web:4918fb77b0c21965af07dc"
-        };
+<script>
+    // ==================== FIREBASE CONFIG ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
+        authDomain: "maktab-transport.firebaseapp.com",
+        projectId: "maktab-transport",
+        storageBucket: "maktab-transport.firebasestorage.app",
+        messagingSenderId: "575357634901",
+        appId: "1:575357634901:web:4918fb77b0c21965af07dc"
+    };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-    
-        // ==================== GLOBAL STATE ====================
-        let currentUser = null;
-        let currentUserData = null;
-        let routesList = [];
-        let driversMap = {};
-        let unsubscribers = [];
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        // ==================== HELPER FUNCTIONS ====================
-        function todayISO() {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        }
+    // ==================== GLOBAL STATE ====================
+    let currentUser = null;
+    let currentUserData = null;
+    let routesList = [];
+    let driversMap = {};
+    let unsubscribers = [];
 
-        function nowHM() {
-            const d = new Date();
-            return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        }
+    // ==================== HELPER FUNCTIONS ====================
+    function todayISO() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
 
-        function hmToMinutes(hm) {
-            if (!hm || !hm.includes(':')) return null;
-            const [h, m] = hm.split(':').map(Number);
-            return h * 60 + m;
-        }
+    function nowHM() {
+        const d = new Date();
+        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
 
-        function minutesToHM(mins) {
-            mins = ((mins % 1440) + 1440) % 1440;
-            return `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
-        }
+    function hmToMinutes(hm) {
+        if (!hm || !hm.includes(':')) return null;
+        const [h, m] = hm.split(':').map(Number);
+        return h * 60 + m;
+    }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            return String(text).replace(/[&<>"]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                if (m === '"') return '&quot;';
-                return m;
-            });
-        }
+    function minutesToHM(mins) {
+        mins = ((mins % 1440) + 1440) % 1440;
+        return `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
+    }
 
-        function showToast(msg, type = 'info') {
-            alert(msg); // Simple for now
-        }
-
-        // ==================== AUTH ====================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-            } catch (error) {
-                alert('Login failed: ' + error.message);
-            }
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/[&<>"]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;';
+            return m;
         });
+    }
 
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('dashboardSection').classList.add('hidden');
-                document.getElementById('userInfo').classList.add('hidden');
-                return;
-            }
+    function showToast(msg, type = 'info') {
+        alert(msg); // Simple for now
+    }
 
+    // ==================== AUTH ====================
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch (error) {
+            alert('Login failed: ' + error.message);
+        }
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            return;
+        }
+
+        try {
             const usersQuery = await db.collection('users').where('uid', '==', user.uid).get();
             if (usersQuery.empty) {
-                alert('User profile not found');
+                alert('User profile not found. Please contact admin.');
                 return;
             }
 
@@ -680,398 +678,399 @@
             if (currentUserData.role === 'admin') renderAdmin();
             else if (currentUserData.role === 'driver') renderDriver();
             else if (currentUserData.role === 'parent') renderParent();
-        });
+        } catch (error) {
+            console.error('Auth error:', error);
+            alert('Error loading user data');
+        }
+    });
 
-        async function loadRoutesAndDrivers() {
+    async function loadRoutesAndDrivers() {
+        try {
             const routesSnap = await db.collection('routes').get();
             routesList = routesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             
             const driversSnap = await db.collection('users').where('role', '==', 'driver').get();
             driversMap = {};
             driversSnap.forEach(d => { driversMap[d.data().uid] = d.data(); });
+        } catch (error) {
+            console.error('Error loading data:', error);
         }
+    }
 
-        // ==================== ADMIN PANEL ====================
-        function renderAdmin() {
-            const target = document.getElementById('dynamicContent');
-            let activeTab = 'students';
+    // ==================== ADMIN PANEL ====================
+    function renderAdmin() {
+        const target = document.getElementById('dynamicContent');
+        let activeTab = 'students';
 
-            target.innerHTML = `
-                <div class="admin-tabs">
-                    <button class="tab-btn active" onclick="switchTab('students')">👥 Students</button>
-                    <button class="tab-btn" onclick="switchTab('drivers')">🚌 Drivers</button>
-                    <button class="tab-btn" onclick="switchTab('routes')">🗺️ Routes</button>
-                    <button class="tab-btn" onclick="switchTab('live')">🔄 Live Trips</button>
-                </div>
+        target.innerHTML = `
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="switchTab('students')">👥 Students</button>
+                <button class="tab-btn" onclick="switchTab('drivers')">🚌 Drivers</button>
+                <button class="tab-btn" onclick="switchTab('routes')">🗺️ Routes</button>
+                <button class="tab-btn" onclick="switchTab('live')">🔄 Live Trips</button>
+            </div>
 
-                <!-- Students Tab -->
-                <div id="tab-students" class="tab-content active">
-                    <div class="card">
-                        <h3>➕ Enroll New Student</h3>
-                        <form id="enrollForm" class="form-grid">
-                            <input type="text" id="studentName" placeholder="Full Name" required>
-                            <select id="studentGender">
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                            <input type="date" id="studentDob" required>
-                            <input type="text" id="studentAddress" placeholder="Home Address" required>
-                            <select id="studentRoute">
-                                <option value="">Select Route</option>
-                                ${routesList.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
-                            </select>
-                            <input type="email" id="parentEmail" placeholder="Parent Email" required>
-                            <input type="password" id="parentPass" placeholder="Parent Password" required>
-                            <input type="text" id="parentPhone" placeholder="Parent Phone">
-                            <button type="submit" class="btn-primary" style="grid-column: 1/-1;">Enroll Student</button>
-                        </form>
-                    </div>
-
-                    <div class="card">
-                        <h3>📋 Student Database</h3>
-                        <div class="table-container">
-                            <table id="studentsTable">
-                                <thead>
-                                    <tr><th>Name</th><th>Route</th><th>Pickup</th><th>Drop</th><th>Stop#</th><th>AM</th><th>PM</th><th></th></tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Drivers Tab -->
-                <div id="tab-drivers" class="tab-content">
-                    <div class="card">
-                        <h3>➕ Register Driver</h3>
-                        <form id="driverForm" class="form-grid">
-                            <input type="text" id="driverName" placeholder="Full Name" required>
-                            <input type="email" id="driverEmail" placeholder="Email" required>
-                            <input type="text" id="driverPhone" placeholder="Phone" required>
-                            <input type="text" id="driverCar" placeholder="Vehicle" required>
-                            <input type="password" id="driverPass" placeholder="Password" required>
-                            <button type="submit" class="btn-primary" style="grid-column: 1/-1;">Register Driver</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3>👥 Drivers List</h3>
-                        <div id="driversList"></div>
-                    </div>
-                </div>
-
-                <!-- Routes Tab -->
-                <div id="tab-routes" class="tab-content">
-                    <div class="card">
-                        <h3>➕ Create Route</h3>
-                        <form id="routeForm" class="form-grid">
-                            <input type="text" id="routeName" placeholder="Route Name" required>
-                            <button type="submit" class="btn-primary">Create Route</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3>🗺️ Routes & Drivers</h3>
-                        <div id="routesList"></div>
-                    </div>
-                </div>
-
-                <!-- Live Trips Tab -->
-                <div id="tab-live" class="tab-content">
-                    <div class="card">
-                        <h3>🔄 Live Trips Today</h3>
-                        <div id="liveTrips"></div>
-                    </div>
-                </div>
-            `;
-
-            // Load data
-            loadStudentsTable();
-            loadDriversList();
-            loadRoutesList();
-            loadLiveTrips();
-
-            // Event listeners
-            document.getElementById('enrollForm').addEventListener('submit', handleEnroll);
-            document.getElementById('driverForm').addEventListener('submit', handleDriverRegister);
-            document.getElementById('routeForm').addEventListener('submit', handleRouteCreate);
-        }
-
-        window.switchTab = (tab) => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-            document.getElementById(`tab-${tab}`).classList.add('active');
-        };
-
-        async function handleEnroll(e) {
-            e.preventDefault();
-            // Simplified enrollment - creates parent and student
-            const email = document.getElementById('parentEmail').value;
-            const pass = document.getElementById('parentPass').value;
-            
-            try {
-                // Create parent in Firebase Auth (using fetch or separate instance)
-                showToast('Enrollment successful (demo)', 'success');
-                e.target.reset();
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
-        }
-
-        async function handleDriverRegister(e) {
-            e.preventDefault();
-            showToast('Driver registered (demo)', 'success');
-            e.target.reset();
-        }
-
-        async function handleRouteCreate(e) {
-            e.preventDefault();
-            const name = document.getElementById('routeName').value;
-            await db.collection('routes').add({ name, driverUidAM: '', driverUidPM: '' });
-            showToast('Route created', 'success');
-            e.target.reset();
-            loadRoutesAndDrivers();
-        }
-
-        function loadStudentsTable() {
-            db.collection('students').onSnapshot(snap => {
-                const tbody = document.querySelector('#studentsTable tbody');
-                if (!tbody) return;
-                tbody.innerHTML = snap.docs.map(d => {
-                    const s = d.data();
-                    return `<tr>
-                        <td>${escapeHtml(s.name)}</td>
-                        <td>${routesList.find(r => r.id === s.routeId)?.name || '-'}</td>
-                        <td><input value="${escapeHtml(s.pickupLoc || '')}" onchange="updateStudent('${d.id}', 'pickupLoc', this.value)"></td>
-                        <td><input value="${escapeHtml(s.dropoffLoc || '')}" onchange="updateStudent('${d.id}', 'dropoffLoc', this.value)"></td>
-                        <td><input type="number" value="${s.stopOrder || ''}" style="width:60px" onchange="updateStudent('${d.id}', 'stopOrder', this.value)"></td>
-                        <td><input type="number" value="${s.minsAM || ''}" style="width:60px" onchange="updateStudent('${d.id}', 'minsAM', this.value)"></td>
-                        <td><input type="number" value="${s.minsPM || ''}" style="width:60px" onchange="updateStudent('${d.id}', 'minsPM', this.value)"></td>
-                        <td><button onclick="deleteStudent('${d.id}')">🗑️</button></td>
-                    </tr>`;
-                }).join('');
-            });
-        }
-
-        window.updateStudent = async (id, field, val) => {
-            const update = {};
-            update[field] = field.includes('min') || field === 'stopOrder' ? (val === '' ? null : Number(val)) : val;
-            await db.collection('students').doc(id).update(update);
-        };
-
-        window.deleteStudent = async (id) => {
-            if (confirm('Delete student?')) await db.collection('students').doc(id).delete();
-        };
-
-        function loadDriversList() {
-            db.collection('users').where('role', '==', 'driver').onSnapshot(snap => {
-                const div = document.getElementById('driversList');
-                if (!div) return;
-                div.innerHTML = snap.docs.map(d => {
-                    const dr = d.data();
-                    return `<div style="padding:10px; border-bottom:1px solid var(--gray-100);">
-                        <b>${escapeHtml(dr.fullName)}</b> · ${escapeHtml(dr.phone || '')} · ${escapeHtml(dr.assignedCar || '')}
-                    </div>`;
-                }).join('');
-            });
-        }
-
-        function loadRoutesList() {
-            db.collection('routes').onSnapshot(snap => {
-                const div = document.getElementById('routesList');
-                if (!div) return;
-                div.innerHTML = snap.docs.map(r => {
-                    const route = r.data();
-                    return `<div style="padding:15px; border-bottom:1px solid var(--gray-100);">
-                        <b>${escapeHtml(route.name)}</b><br>
-                        AM: ${driversMap[route.driverUidAM]?.fullName || 'Unassigned'} 
-                        <select onchange="assignDriver('${r.id}', 'AM', this.value)">
-                            <option value="">—</option>
-                            ${Object.entries(driversMap).map(([uid, dr]) => 
-                                `<option value="${uid}" ${route.driverUidAM === uid ? 'selected' : ''}>${dr.fullName}</option>`
-                            ).join('')}
-                        </select><br>
-                        PM: ${driversMap[route.driverUidPM]?.fullName || 'Unassigned'}
-                        <select onchange="assignDriver('${r.id}', 'PM', this.value)">
-                            <option value="">—</option>
-                            ${Object.entries(driversMap).map(([uid, dr]) => 
-                                `<option value="${uid}" ${route.driverUidPM === uid ? 'selected' : ''}>${dr.fullName}</option>`
-                            ).join('')}
+            <!-- Students Tab -->
+            <div id="tab-students" class="tab-content active">
+                <div class="card">
+                    <h3>➕ Enroll New Student</h3>
+                    <form id="enrollForm" class="form-grid">
+                        <input type="text" id="studentName" placeholder="Full Name" required>
+                        <select id="studentGender">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
                         </select>
-                    </div>`;
-                }).join('');
-            });
-        }
+                        <input type="date" id="studentDob" required>
+                        <input type="text" id="studentAddress" placeholder="Home Address" required>
+                        <select id="studentRoute">
+                            <option value="">Select Route</option>
+                            ${routesList.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+                        </select>
+                        <input type="email" id="parentEmail" placeholder="Parent Email" required>
+                        <input type="password" id="parentPass" placeholder="Parent Password" required>
+                        <input type="text" id="parentPhone" placeholder="Parent Phone">
+                        <button type="submit" class="btn-primary" style="grid-column: 1/-1;">Enroll Student</button>
+                    </form>
+                </div>
 
-        window.assignDriver = async (routeId, session, uid) => {
-            await db.collection('routes').doc(routeId).update({ [session === 'AM' ? 'driverUidAM' : 'driverUidPM']: uid });
-        };
-
-        function loadLiveTrips() {
-            // Simplified live trips view
-            document.getElementById('liveTrips').innerHTML = '<p>Live trips appear here</p>';
-        }
-
-        // ==================== DRIVER PANEL ====================
-        function renderDriver() {
-            const target = document.getElementById('dynamicContent');
-            target.innerHTML = `
-                <div class="driver-header">
-                    <h2 style="margin-bottom:10px;">🚌 Driver Console</h2>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span>📅 ${todayISO()}</span>
-                        <span>🕐 <span id="driverClock">${nowHM()}</span></span>
-                    </div>
-                    <div class="trip-controls">
-                        <button class="btn-start" onclick="startTrip()">▶ START TRIP</button>
-                        <button class="btn-end" onclick="endTrip()">⏹ END TRIP</button>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="tripProgress" style="width:0%"></div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-top:8px;">
-                        <span id="tripStatus">Not started</span>
-                        <span id="progressPercent">0%</span>
+                <div class="card">
+                    <h3>📋 Student Database</h3>
+                    <div class="table-container">
+                        <table id="studentsTable">
+                            <thead>
+                                <tr><th>Name</th><th>Route</th><th>Pickup</th><th>Drop</th><th>Stop#</th><th>AM</th><th>PM</th><th></th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
                 </div>
-                <div id="driverStudentList"></div>
-            `;
-            setInterval(() => {
-                document.getElementById('driverClock') && (document.getElementById('driverClock').textContent = nowHM());
-            }, 1000);
-            loadDriverStudents();
-        }
+            </div>
 
-        async function loadDriverStudents() {
-            if (!currentUserData?.uid) return;
-            const routes = routesList.filter(r => r.driverUidAM === currentUserData.uid || r.driverUidPM === currentUserData.uid);
-            if (!routes.length) {
-                document.getElementById('driverStudentList').innerHTML = '<div class="card">No route assigned</div>';
-                return;
-            }
-            const routeId = routes[0].id;
-            const session = new Date().getHours() < 12 ? 'AM' : 'PM';
+            <!-- Drivers Tab -->
+            <div id="tab-drivers" class="tab-content">
+                <div class="card">
+                    <h3>➕ Register Driver</h3>
+                    <form id="driverForm" class="form-grid">
+                        <input type="text" id="driverName" placeholder="Full Name" required>
+                        <input type="email" id="driverEmail" placeholder="Email" required>
+                        <input type="text" id="driverPhone" placeholder="Phone" required>
+                        <input type="text" id="driverCar" placeholder="Vehicle" required>
+                        <input type="password" id="driverPass" placeholder="Password" required>
+                        <button type="submit" class="btn-primary" style="grid-column: 1/-1;">Register Driver</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>👥 Drivers List</h3>
+                    <div id="driversList"></div>
+                </div>
+            </div>
+
+            <!-- Routes Tab -->
+            <div id="tab-routes" class="tab-content">
+                <div class="card">
+                    <h3>➕ Create Route</h3>
+                    <form id="routeForm" class="form-grid">
+                        <input type="text" id="routeName" placeholder="Route Name" required>
+                        <button type="submit" class="btn-primary">Create Route</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>🗺️ Routes & Drivers</h3>
+                    <div id="routesList"></div>
+                </div>
+            </div>
+
+            <!-- Live Trips Tab -->
+            <div id="tab-live" class="tab-content">
+                <div class="card">
+                    <h3>🔄 Live Trips Today</h3>
+                    <div id="liveTrips"></div>
+                </div>
+            </div>
+        `;
+
+        // Load data
+        loadStudentsTable();
+        loadDriversList();
+        loadRoutesList();
+        loadLiveTrips();
+
+        // Event listeners
+        document.getElementById('enrollForm').addEventListener('submit', handleEnroll);
+        document.getElementById('driverForm').addEventListener('submit', handleDriverRegister);
+        document.getElementById('routeForm').addEventListener('submit', handleRouteCreate);
+    }
+
+    window.switchTab = (tab) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[onclick*="'${tab}'"]`).classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+    };
+
+    async function handleEnroll(e) {
+        e.preventDefault();
+        alert('Enrollment feature - needs Firebase Auth setup');
+    }
+
+    async function handleDriverRegister(e) {
+        e.preventDefault();
+        alert('Driver registration - needs Firebase Auth setup');
+    }
+
+    async function handleRouteCreate(e) {
+        e.preventDefault();
+        const name = document.getElementById('routeName').value;
+        await db.collection('routes').add({ name, driverUidAM: '', driverUidPM: '' });
+        alert('Route created!');
+        e.target.reset();
+        loadRoutesAndDrivers();
+    }
+
+    function loadStudentsTable() {
+        db.collection('students').onSnapshot(snap => {
+            const tbody = document.querySelector('#studentsTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = snap.docs.map(d => {
+                const s = d.data();
+                return `<tr>
+                    <td>${escapeHtml(s.name)}</td>
+                    <td>${routesList.find(r => r.id === s.routeId)?.name || '-'}</td>
+                    <td><input value="${escapeHtml(s.pickupLoc || '')}" onchange="updateStudent('${d.id}', 'pickupLoc', this.value)"></td>
+                    <td><input value="${escapeHtml(s.dropoffLoc || '')}" onchange="updateStudent('${d.id}', 'dropoffLoc', this.value)"></td>
+                    <td><input type="number" value="${s.stopOrder || ''}" style="width:60px" onchange="updateStudent('${d.id}', 'stopOrder', this.value)"></td>
+                    <td><input type="number" value="${s.minsAM || ''}" style="width:60px" onchange="updateStudent('${d.id}', 'minsAM', this.value)"></td>
+                    <td><input type="number" value="${s.minsPM || ''}" style="width:60px" onchange="updateStudent('${d.id}', 'minsPM', this.value)"></td>
+                    <td><button onclick="deleteStudent('${d.id}')">🗑️</button></td>
+                </tr>`;
+            }).join('');
+        });
+    }
+
+    window.updateStudent = async (id, field, val) => {
+        const update = {};
+        update[field] = field.includes('min') || field === 'stopOrder' ? (val === '' ? null : Number(val)) : val;
+        await db.collection('students').doc(id).update(update);
+    };
+
+    window.deleteStudent = async (id) => {
+        if (confirm('Delete student?')) await db.collection('students').doc(id).delete();
+    };
+
+    function loadDriversList() {
+        db.collection('users').where('role', '==', 'driver').onSnapshot(snap => {
+            const div = document.getElementById('driversList');
+            if (!div) return;
+            div.innerHTML = snap.docs.map(d => {
+                const dr = d.data();
+                return `<div style="padding:10px; border-bottom:1px solid var(--gray-100);">
+                    <b>${escapeHtml(dr.fullName)}</b> · ${escapeHtml(dr.phone || '')} · ${escapeHtml(dr.assignedCar || '')}
+                </div>`;
+            }).join('');
+        });
+    }
+
+    function loadRoutesList() {
+        db.collection('routes').onSnapshot(snap => {
+            const div = document.getElementById('routesList');
+            if (!div) return;
+            div.innerHTML = snap.docs.map(r => {
+                const route = r.data();
+                return `<div style="padding:15px; border-bottom:1px solid var(--gray-100);">
+                    <b>${escapeHtml(route.name)}</b><br>
+                    AM: ${driversMap[route.driverUidAM]?.fullName || 'Unassigned'} 
+                    <select onchange="assignDriver('${r.id}', 'AM', this.value)">
+                        <option value="">—</option>
+                        ${Object.entries(driversMap).map(([uid, dr]) => 
+                            `<option value="${uid}" ${route.driverUidAM === uid ? 'selected' : ''}>${dr.fullName}</option>`
+                        ).join('')}
+                    </select><br>
+                    PM: ${driversMap[route.driverUidPM]?.fullName || 'Unassigned'}
+                    <select onchange="assignDriver('${r.id}', 'PM', this.value)">
+                        <option value="">—</option>
+                        ${Object.entries(driversMap).map(([uid, dr]) => 
+                            `<option value="${uid}" ${route.driverUidPM === uid ? 'selected' : ''}>${dr.fullName}</option>`
+                        ).join('')}
+                    </select>
+                </div>`;
+            }).join('');
+        });
+    }
+
+    window.assignDriver = async (routeId, session, uid) => {
+        await db.collection('routes').doc(routeId).update({ [session === 'AM' ? 'driverUidAM' : 'driverUidPM']: uid });
+    };
+
+    function loadLiveTrips() {
+        document.getElementById('liveTrips').innerHTML = '<p>Live trips appear here</p>';
+    }
+
+    // ==================== DRIVER PANEL ====================
+    function renderDriver() {
+        const target = document.getElementById('dynamicContent');
+        target.innerHTML = `
+            <div class="driver-header">
+                <h2 style="margin-bottom:10px;">🚌 Driver Console</h2>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>📅 ${todayISO()}</span>
+                    <span>🕐 <span id="driverClock">${nowHM()}</span></span>
+                </div>
+                <div class="trip-controls">
+                    <button class="btn-start" onclick="startTrip()">▶ START TRIP</button>
+                    <button class="btn-end" onclick="endTrip()">⏹ END TRIP</button>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="tripProgress" style="width:0%"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                    <span id="tripStatus">Not started</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+            <div id="driverStudentList"></div>
+        `;
+        setInterval(() => {
+            document.getElementById('driverClock') && (document.getElementById('driverClock').textContent = nowHM());
+        }, 1000);
+        loadDriverStudents();
+    }
+
+    async function loadDriverStudents() {
+        if (!currentUserData?.uid) return;
+        const routes = routesList.filter(r => r.driverUidAM === currentUserData.uid || r.driverUidPM === currentUserData.uid);
+        if (!routes.length) {
+            document.getElementById('driverStudentList').innerHTML = '<div class="card">No route assigned</div>';
+            return;
+        }
+        const routeId = routes[0].id;
+        const session = new Date().getHours() < 12 ? 'AM' : 'PM';
+        
+        db.collection('students').where('routeId', '==', routeId).onSnapshot(snap => {
+            const students = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .filter(s => s.stopOrder != null)
+                .sort((a,b) => (a.stopOrder||999) - (b.stopOrder||999));
             
-            db.collection('students').where('routeId', '==', routeId).onSnapshot(snap => {
-                const students = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .filter(s => s.stopOrder != null)
-                    .sort((a,b) => (a.stopOrder||999) - (b.stopOrder||999));
+            const listDiv = document.getElementById('driverStudentList');
+            if (!listDiv) return;
+            
+            listDiv.innerHTML = students.map((s, idx) => {
+                const isDone = session === 'AM' ? s.doneAM : s.donePM;
+                const isNext = !isDone && students.slice(0, idx).every(st => session === 'AM' ? st.doneAM : st.donePM);
                 
-                const listDiv = document.getElementById('driverStudentList');
-                if (!listDiv) return;
-                
-                listDiv.innerHTML = students.map((s, idx) => {
-                    const isDone = session === 'AM' ? s.doneAM : s.donePM;
-                    const isNext = !isDone && students.slice(0, idx).every(st => session === 'AM' ? st.doneAM : st.donePM);
-                    
-                    return `
-                        <div class="student-card ${isNext ? 'next' : ''} ${isDone ? 'completed' : ''}">
-                            <div class="student-header">
-                                <div><span class="stop-badge">#${s.stopOrder}</span> <strong>${escapeHtml(s.name)}</strong></div>
-                                <span class="eta-badge" id="eta-${s.id}">--:--</span>
-                            </div>
-                            <div class="duration-control">
-                                <button onclick="adjustMin('${s.id}', -1)">−</button>
-                                <span id="min-${s.id}">${s.minsAM || 0}</span>
-                                <button onclick="adjustMin('${s.id}', 1)">+</button>
-                                <span style="margin-left:auto;">min</span>
-                            </div>
-                            <div class="action-buttons">
-                                ${!isDone ? `
-                                    <button class="btn-pick" onclick="markEvent('${s.id}', '${escapeHtml(s.name)}', 'PICK')">✅ PICK</button>
-                                    <button class="btn-drop" onclick="markEvent('${s.id}', '${escapeHtml(s.name)}', 'DROP')">🏁 DROP</button>
-                                ` : '<button class="btn-drop" disabled>✓ DONE</button>'}
-                                <button class="btn-map" onclick="openMap('${escapeHtml(s.pickupLoc || s.address)}')">🗺️ MAP</button>
-                            </div>
+                return `
+                    <div class="student-card ${isNext ? 'next' : ''} ${isDone ? 'completed' : ''}">
+                        <div class="student-header">
+                            <div><span class="stop-badge">#${s.stopOrder}</span> <strong>${escapeHtml(s.name)}</strong></div>
+                            <span class="eta-badge" id="eta-${s.id}">--:--</span>
                         </div>
-                    `;
-                }).join('');
-            });
-        }
-
-        window.startTrip = async () => {
-            const time = prompt('Start time (HH:MM)', nowHM());
-            if (!time) return;
-            showToast(`Trip started at ${time}`, 'success');
-        };
-
-        window.endTrip = () => {
-            if (confirm('End trip?')) showToast('Trip ended', 'success');
-        };
-
-        window.adjustMin = (studentId, delta) => {
-            const span = document.getElementById(`min-${studentId}`);
-            if (!span) return;
-            const current = parseInt(span.textContent) || 0;
-            const newVal = Math.max(0, current + delta);
-            span.textContent = newVal;
-            // Save to Firestore would go here
-        };
-
-        window.markEvent = (studentId, name, type) => {
-            showToast(`${name} ${type}ED`, 'success');
-            // Update Firestore would go here
-        };
-
-        window.openMap = (addr) => {
-            if (!addr) return alert('No address');
-            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`, '_blank');
-        };
-
-        // ==================== PARENT PANEL ====================
-        function renderParent() {
-            const target = document.getElementById('dynamicContent');
-            target.innerHTML = `
-                <div class="child-selector" id="childSelector"></div>
-                <div id="parentStatus"></div>
-                <button class="absent-btn" onclick="requestAbsent()"><i class="fas fa-calendar-times"></i> ABSENT TODAY</button>
-            `;
-            loadChildren();
-        }
-
-        async function loadChildren() {
-            const snap = await db.collection('students').where('parentUid', '==', currentUserData?.uid).get();
-            const children = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            
-            const selector = document.getElementById('childSelector');
-            selector.innerHTML = children.map((c, i) => 
-                `<div class="child-tab ${i===0?'active':''}" onclick="selectChild('${c.id}')">${escapeHtml(c.name)}</div>`
-            ).join('');
-            
-            if (children.length) selectChild(children[0].id);
-        }
-
-        window.selectChild = (childId) => {
-            document.querySelectorAll('.child-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            db.collection('students').doc(childId).get().then(doc => {
-                const s = doc.data();
-                document.getElementById('parentStatus').innerHTML = `
-                    <div class="status-card">
-                        <div>${escapeHtml(s.name)}</div>
-                        <div class="big-status">${s.status || 'AWAITING'}</div>
-                        <div class="big-eta" id="parentEta">--:--</div>
-                    </div>
-                    <div class="timeline" id="parentTimeline">
-                        <div class="timeline-item"><span class="timeline-time">--:--</span> Waiting for updates</div>
+                        <div class="duration-control">
+                            <button onclick="adjustMin('${s.id}', -1)">−</button>
+                            <span id="min-${s.id}">${s.minsAM || 0}</span>
+                            <button onclick="adjustMin('${s.id}', 1)">+</button>
+                            <span style="margin-left:auto;">min</span>
+                        </div>
+                        <div class="action-buttons">
+                            ${!isDone ? `
+                                <button class="btn-pick" onclick="markEvent('${s.id}', '${escapeHtml(s.name)}', 'PICK')">✅ PICK</button>
+                                <button class="btn-drop" onclick="markEvent('${s.id}', '${escapeHtml(s.name)}', 'DROP')">🏁 DROP</button>
+                            ` : '<button class="btn-drop" disabled>✓ DONE</button>'}
+                            <button class="btn-map" onclick="openMap('${escapeHtml(s.pickupLoc || s.address)}')">🗺️ MAP</button>
+                        </div>
                     </div>
                 `;
-            });
-        };
+            }).join('');
+        });
+    }
 
-        window.requestAbsent = () => {
-            if (confirm('Mark absent today?')) showToast('Absent request sent', 'success');
-        };
+    window.startTrip = async () => {
+        const time = prompt('Start time (HH:MM)', nowHM());
+        if (!time) return;
+        alert(`Trip started at ${time}`);
+    };
 
-        // ==================== GLOBAL ====================
-        window.handleRefresh = () => {
-            if (currentUserData?.role === 'admin') renderAdmin();
-            else if (currentUserData?.role === 'driver') renderDriver();
-            else if (currentUserData?.role === 'parent') renderParent();
-        };
+    window.endTrip = () => {
+        if (confirm('End trip?')) alert('Trip ended');
+    };
 
-        window.handleLogout = () => {
-            auth.signOut();
-        };
-    </script>
+    window.adjustMin = (studentId, delta) => {
+        const span = document.getElementById(`min-${studentId}`);
+        if (!span) return;
+        const current = parseInt(span.textContent) || 0;
+        const newVal = Math.max(0, current + delta);
+        span.textContent = newVal;
+    };
+
+    window.markEvent = (studentId, name, type) => {
+        alert(`${name} ${type}ED`);
+    };
+
+    window.openMap = (addr) => {
+        if (!addr) return alert('No address');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`, '_blank');
+    };
+
+    // ==================== PARENT PANEL ====================
+    function renderParent() {
+        const target = document.getElementById('dynamicContent');
+        target.innerHTML = `
+            <div class="child-selector" id="childSelector"></div>
+            <div id="parentStatus"></div>
+            <button class="absent-btn" onclick="requestAbsent()"><i class="fas fa-calendar-times"></i> ABSENT TODAY</button>
+        `;
+        loadChildren();
+    }
+
+    async function loadChildren() {
+        const snap = await db.collection('students').where('parentUid', '==', currentUserData?.uid).get();
+        const children = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        const selector = document.getElementById('childSelector');
+        selector.innerHTML = children.map((c, i) => 
+            `<div class="child-tab ${i===0?'active':''}" onclick="selectChild('${c.id}')">${escapeHtml(c.name)}</div>`
+        ).join('');
+        
+        if (children.length) selectChild(children[0].id);
+    }
+
+    window.selectChild = (childId) => {
+        document.querySelectorAll('.child-tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        db.collection('students').doc(childId).get().then(doc => {
+            const s = doc.data();
+            document.getElementById('parentStatus').innerHTML = `
+                <div class="status-card">
+                    <div>${escapeHtml(s.name)}</div>
+                    <div class="big-status">${s.status || 'AWAITING'}</div>
+                    <div class="big-eta" id="parentEta">--:--</div>
+                </div>
+                <div class="timeline" id="parentTimeline">
+                    <div class="timeline-item"><span class="timeline-time">--:--</span> Waiting for updates</div>
+                </div>
+            `;
+        });
+    };
+
+    window.requestAbsent = () => {
+        if (confirm('Mark absent today?')) alert('Absent request sent');
+    };
+
+    // ==================== GLOBAL ====================
+    window.handleRefresh = () => {
+        if (currentUserData?.role === 'admin') renderAdmin();
+        else if (currentUserData?.role === 'driver') renderDriver();
+        else if (currentUserData?.role === 'parent') renderParent();
+    };
+
+    window.handleLogout = () => {
+        auth.signOut();
+    };
+
+    // Handle favicon 404 error (optional)
+    const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+    link.type = 'image/x-icon';
+    link.rel = 'shortcut icon';
+    link.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🚌</text></svg>';
+    document.getElementsByTagName('head')[0].appendChild(link);
+</script>
 </body>
 </html>
