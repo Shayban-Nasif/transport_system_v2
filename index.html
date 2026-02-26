@@ -543,7 +543,7 @@
                 <h2>Welcome Back</h2>
                 <p style="color: var(--gray-600); margin-bottom: 20px;">School Transport System</p>
                 
-                <form id="loginForm">
+                <form id="loginForm" onsubmit="handleLogin(event)">
                     <input type="email" id="email" placeholder="Email" required>
                     <input type="password" id="password" placeholder="Password" required>
                     <button type="submit">Login</button>
@@ -633,17 +633,40 @@
     }
 
     // ==================== AUTH ====================
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+    // ==================== LOGIN HANDLER ====================
+window.handleLogin = async (event) => {
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    console.log('Attempting login with:', email); // Debug log
+    
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('Login successful:', userCredential.user.uid);
+        // Don't redirect - let onAuthStateChanged handle it
+    } catch (error) {
+        console.error('Login error:', error);
         
-        try {
-            await auth.signInWithEmailAndPassword(email, password);
-        } catch (error) {
-            alert('Login failed: ' + error.message);
+        let message = 'Login failed: ';
+        if (error.code === 'auth/user-not-found') {
+            message += 'User not found';
+        } else if (error.code === 'auth/wrong-password') {
+            message += 'Wrong password';
+        } else if (error.code === 'auth/too-many-requests') {
+            message += 'Too many attempts. Try again later';
+        } else if (error.code === 'auth/invalid-email') {
+            message += 'Invalid email format';
+        } else if (error.code === 'auth/network-request-failed') {
+            message += 'Network error. Check your connection.';
+        } else {
+            message += error.message;
         }
-    });
+        
+        alert(message);
+    }
+};
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
