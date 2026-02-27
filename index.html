@@ -569,57 +569,188 @@
     </div>
 
     <script>
-    // ==================== FIREBASE CONFIG ====================
-    const firebaseConfig = {
-        apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
-        authDomain: "maktab-transport.firebaseapp.com",
-        projectId: "maktab-transport",
-        storageBucket: "maktab-transport.firebasestorage.app",
-        messagingSenderId: "575357634901",
-        appId: "1:575357634901:web:4918fb77b0c21965af07dc"
-    };
+    // ==================== CHECK IF FIREBASE IS LOADED ====================
+    function waitForFirebase() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds total
+            
+            const check = setInterval(() => {
+                attempts++;
+                if (typeof firebase !== 'undefined' && firebase.app) {
+                    clearInterval(check);
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(check);
+                    reject(new Error('Firebase failed to load'));
+                }
+            }, 100);
+        });
+    }
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    // Load Firebase dynamically if needed
+    function loadFirebaseScripts() {
+        return new Promise((resolve, reject) => {
+            if (typeof firebase !== 'undefined' && firebase.app) {
+                resolve();
+                return;
+            }
+            
+            console.log('Loading Firebase scripts...');
+            
+            // Create script elements
+            const scripts = [
+                'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
+                'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js',
+                'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
+            ];
+            
+            let loaded = 0;
+            
+            scripts.forEach(src => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    loaded++;
+                    if (loaded === scripts.length) {
+                        setTimeout(resolve, 200); // Give Firebase time to initialize
+                    }
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        });
+    }
 
-    console.log('Firebase loaded');
-
-    // ==================== SIMPLE LOGIN TEST ====================
-    document.getElementById('loginBtn').addEventListener('click', async function() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        alert('Trying to login... Check console (F12)');
-        console.log('Login attempt with:', email);
-        
+    // Initialize everything when page loads
+    (async function init() {
         try {
-            const result = await auth.signInWithEmailAndPassword(email, password);
-            console.log('✅ Login success!', result.user.uid);
-            alert('Login successful! Check console');
+            console.log('Starting initialization...');
+            
+            // Try to load Firebase if not present
+            if (typeof firebase === 'undefined') {
+                await loadFirebaseScripts();
+            }
+            
+            // Wait for Firebase to be ready
+            await waitForFirebase();
+            console.log('✅ Firebase loaded successfully');
+            
+            // ==================== FIREBASE CONFIG ====================
+            const firebaseConfig = {
+                apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
+                authDomain: "maktab-transport.firebaseapp.com",
+                projectId: "maktab-transport",
+                storageBucket: "maktab-transport.firebasestorage.app",
+                messagingSenderId: "575357634901",
+                appId: "1:575357634901:web:4918fb77b0c21965af07dc"
+            };
+
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            
+            console.log('✅ Firebase initialized');
+
+            // ==================== GLOBAL STATE ====================
+            let currentUserData = null;
+
+            // ==================== LOGIN HANDLER ====================
+            document.getElementById('loginBtn').addEventListener('click', async function() {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                    alert('Please enter email and password');
+                    return;
+                }
+                
+                try {
+                    console.log('Attempting login...');
+                    await auth.signInWithEmailAndPassword(email, password);
+                } catch (error) {
+                    console.error('Login error:', error);
+                    
+                    let message = 'Login failed: ';
+                    if (error.code === 'auth/user-not-found') message += 'User not found';
+                    else if (error.code === 'auth/wrong-password') message += 'Wrong password';
+                    else if (error.code === 'auth/too-many-requests') message += 'Too many attempts';
+                    else message += error.message;
+                    
+                    alert(message);
+                }
+            });
+
+            // Enter key handler
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('loginBtn').click();
+                }
+            });
+
+            // Auth state listener
+            auth.onAuthStateChanged(async (user) => {
+                console.log('Auth state changed:', user ? 'Logged in' : 'Logged out');
+                
+                if (!user) {
+                    document.getElementById('loginSection').classList.remove('hidden');
+                    document.getElementById('dashboardSection').classList.add('hidden');
+                    document.getElementById('userInfo').classList.add('hidden');
+                    return;
+                }
+
+                try {
+                    // Find user in database
+                    const usersQuery = await db.collection('users').where('uid', '==', user.uid).get();
+                    
+                    if (usersQuery.empty) {
+                        alert('User not found in database');
+                        await auth.signOut();
+                        return;
+                    }
+
+                    currentUserData = { id: usersQuery.docs[0].id, ...usersQuery.docs[0].data() };
+                    
+                    // Update UI
+                    document.getElementById('userName').textContent = currentUserData.fullName || 'User';
+                    document.getElementById('userRole').textContent = currentUserData.role || 'unknown';
+                    document.getElementById('userInfo').classList.remove('hidden');
+
+                    // Show dashboard
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('dashboardSection').classList.remove('hidden');
+                    
+                    // Simple dashboard message
+                    document.getElementById('dynamicContent').innerHTML = `
+                        <div class="card">
+                            <h3>Welcome ${currentUserData.fullName}</h3>
+                            <p>Role: ${currentUserData.role}</p>
+                            <p>Login successful! Full dashboard coming soon.</p>
+                        </div>
+                    `;
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error loading user data');
+                    await auth.signOut();
+                }
+            });
+
+            window.handleLogout = () => auth.signOut();
+            window.handleRefresh = () => window.location.reload();
+
         } catch (error) {
-            console.error('❌ Login error:', error);
-            alert('Error: ' + error.message);
+            console.error('❌ Initialization failed:', error);
+            document.body.innerHTML = `
+                <div style="padding:20px; text-align:center;">
+                    <h2>Failed to load application</h2>
+                    <p>Error: ${error.message}</p>
+                    <button onclick="location.reload()">Reload Page</button>
+                </div>
+            `;
         }
-    });
-
-    // Auth state listener
-    auth.onAuthStateChanged((user) => {
-        console.log('Auth state changed:', user ? 'Logged in' : 'Logged out');
-        if (user) {
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            document.getElementById('userInfo').classList.remove('hidden');
-            document.getElementById('userName').textContent = user.email;
-        } else {
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('dashboardSection').classList.add('hidden');
-            document.getElementById('userInfo').classList.add('hidden');
-        }
-    });
-
-    window.handleLogout = () => auth.signOut();
+    })();
 </script>
 </body>
 </html>
