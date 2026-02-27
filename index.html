@@ -3,249 +3,443 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Transport</title>
+    <title>School Transport • Local Mode</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            padding: 20px; 
-            max-width: 400px; 
-            margin: 0 auto; 
-            background: #f5f5f5;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
+
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+        }
+
+        body {
+            background: var(--gray-50);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--gray-800);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
         .card {
             background: white;
-            padding: 30px 20px;
             border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-top: 50px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        h1 { 
-            text-align: center; 
-            color: #1e293b;
-            margin-bottom: 30px;
+
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
-        input, button { 
-            width: 100%; 
-            padding: 14px; 
-            margin: 8px 0; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            font-size: 16px;
-            box-sizing: border-box;
+
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 30px;
+            cursor: pointer;
         }
-        button { 
-            background: #2563eb; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             font-weight: 600;
-            margin-top: 16px;
         }
-        button:hover { background: #1d4ed8; }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: var(--gray-100);
+        }
+
+        .badge.success { background: var(--success); color: white; }
+        .badge.warning { background: var(--warning); color: white; }
+        .badge.danger { background: var(--danger); color: white; }
+
         .hidden { display: none; }
-        #errorMsg { 
-            color: #dc2626; 
-            margin: 10px 0; 
-            font-size: 14px;
-            text-align: center;
-        }
-        #status { 
-            color: #4b5563; 
-            font-size: 14px; 
-            margin: 10px 0; 
-            padding: 10px; 
-            background: #f3f4f6; 
-            border-radius: 8px; 
-            text-align: center;
-        }
-        .success { color: #059669; font-weight: bold; }
-        .welcome { text-align: center; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🚌 School Transport</h1>
-        
-        <div id="status">Loading...</div>
-        
-        <div id="loginSection">
-            <input type="email" id="email" placeholder="Email address">
-            <input type="password" id="password" placeholder="Password">
-            <button id="loginBtn">Sign In</button>
-            <div id="errorMsg"></div>
+    <div class="header">
+        🚌 School Transport System • Local Mode
+        <span style="float: right; font-size: 0.9rem;" id="userEmail"></span>
+    </div>
+
+    <div class="container">
+        <!-- Login Section -->
+        <div id="loginSection" class="card">
+            <h2 style="margin-bottom: 20px;">Login</h2>
+            <input type="email" id="email" placeholder="Email" value="admin@iqra.transport.com">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="handleLogin()">Login</button>
+            <p style="margin-top: 10px; color: var(--gray-600);">Demo credentials: admin@iqra.transport.com / admin123</p>
         </div>
 
+        <!-- Dashboard Section -->
         <div id="dashboardSection" class="hidden">
-            <div class="welcome" id="welcomeMsg"></div>
-            <button onclick="logout()" style="background: #dc2626;">Sign Out</button>
+            <div class="tab-bar">
+                <div class="tab active" onclick="switchTab('admin')">👥 Admin</div>
+                <div class="tab" onclick="switchTab('driver')">🚌 Driver</div>
+                <div class="tab" onclick="switchTab('parent')">👪 Parent</div>
+                <button onclick="logout()" style="margin-left: auto; background: var(--danger);">Logout</button>
+            </div>
+
+            <!-- Admin Tab -->
+            <div id="adminTab" class="tab-content active">
+                <div class="card">
+                    <h3>➕ Add Student</h3>
+                    <input type="text" id="studentName" placeholder="Student Name">
+                    <input type="text" id="studentRoute" placeholder="Route (e.g., Route A)">
+                    <input type="number" id="stopOrder" placeholder="Stop Order (1,2,3...)">
+                    <input type="number" id="travelTime" placeholder="Travel Time (minutes)">
+                    <button onclick="addStudent()">Add Student</button>
+                </div>
+
+                <div class="card">
+                    <h3>📋 Student List</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Route</th>
+                                <th>Stop</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Driver Tab -->
+            <div id="driverTab" class="tab-content">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>🚍 Route A - AM Trip</h3>
+                        <button class="btn-success" onclick="startTrip()">▶ Start Trip</button>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Progress</span>
+                            <span id="progressText">0/0</span>
+                        </div>
+                        <div style="background: var(--gray-200); height: 8px; border-radius: 4px; margin-top: 4px;">
+                            <div id="progressBar" style="background: var(--success); height: 8px; border-radius: 4px; width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div id="driverStudentList"></div>
+                </div>
+            </div>
+
+            <!-- Parent Tab -->
+            <div id="parentTab" class="tab-content">
+                <div class="card" id="parentView">
+                    <h3>👤 Student: <span id="selectedStudent">Select a student</span></h3>
+                    <div style="background: var(--gray-50); padding: 20px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.2rem; color: var(--gray-600;">Status</div>
+                        <div id="studentStatus" style="font-size: 2rem; font-weight: bold; margin: 10px 0;">--</div>
+                        <div id="studentEta" style="font-size: 1.5rem;">--:--</div>
+                    </div>
+                    <button class="btn-danger" style="margin-top: 20px;" onclick="markAbsent()">📅 Mark Absent</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Load Firebase from the most reliable CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/dist/firebase-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/dist/firebase-auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/dist/firebase-firestore.js"></script>
-
     <script>
-        (function() {
-            const statusEl = document.getElementById('status');
-            const errorEl = document.getElementById('errorMsg');
+        // ==================== DATA STORAGE ====================
+        let students = JSON.parse(localStorage.getItem('students')) || [
+            { id: 1, name: 'Mehnaz', route: 'Route A', stopOrder: 1, travelTime: 25, status: 'waiting' },
+            { id: 2, name: 'Hasan', route: 'Route A', stopOrder: 2, travelTime: 15, status: 'waiting' },
+            { id: 3, name: 'Yazan', route: 'Route A', stopOrder: 3, travelTime: 10, status: 'waiting' },
+            { id: 4, name: 'Usman', route: 'Route A', stopOrder: 4, travelTime: 15, status: 'waiting' },
+            { id: 5, name: 'Nojima', route: 'Route A', stopOrder: 4, travelTime: 15, status: 'waiting' },
+            { id: 6, name: 'Nabiha', route: 'Route A', stopOrder: 5, travelTime: 25, status: 'waiting' },
+            { id: 7, name: 'Naba', route: 'Route A', stopOrder: 5, travelTime: 25, status: 'waiting' },
+            { id: 8, name: 'Takya', route: 'Route A', stopOrder: 6, travelTime: 15, status: 'waiting' },
+            { id: 9, name: 'Omar', route: 'Route A', stopOrder: 7, travelTime: 10, status: 'waiting' }
+        ];
+
+        let currentUser = null;
+        let tripStarted = false;
+        let tripStartTime = null;
+        let currentStop = 0;
+
+        // ==================== LOGIN ====================
+        window.handleLogin = function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
             
-            function updateStatus(msg, isError = false) {
-                console.log(msg);
-                statusEl.textContent = msg;
-                if (isError) {
-                    statusEl.style.color = '#dc2626';
-                } else {
-                    statusEl.style.color = '#4b5563';
-                }
+            // Simple demo login
+            if (email && password) {
+                currentUser = { email, role: 'admin' };
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                document.getElementById('userEmail').textContent = email;
+                renderStudentTable();
             }
+        };
 
-            function showError(msg) {
-                errorEl.textContent = msg;
+        window.logout = function() {
+            currentUser = null;
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+        };
+
+        // ==================== TAB SWITCHING ====================
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'admin') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('adminTab').classList.add('active');
+                renderStudentTable();
+            } else if (tab === 'driver') {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('driverTab').classList.add('active');
+                renderDriverView();
+            } else if (tab === 'parent') {
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                document.getElementById('parentTab').classList.add('active');
+                renderParentView();
             }
+        };
 
-            // Wait for Firebase to be ready
-            function waitForFirebase() {
-                return new Promise((resolve) => {
-                    let attempts = 0;
-                    const maxAttempts = 30;
-                    
-                    const check = () => {
-                        attempts++;
-                        
-                        // Check if Firebase is fully loaded
-                        if (window.firebase && 
-                            window.firebase.auth && 
-                            window.firebase.firestore) {
-                            resolve(true);
-                            return;
-                        }
-                        
-                        if (attempts >= maxAttempts) {
-                            resolve(false);
-                            return;
-                        }
-                        
-                        setTimeout(check, 200);
-                    };
-                    
-                    check();
-                });
+        // ==================== ADMIN FUNCTIONS ====================
+        window.addStudent = function() {
+            const name = document.getElementById('studentName').value;
+            const route = document.getElementById('studentRoute').value;
+            const stopOrder = parseInt(document.getElementById('stopOrder').value);
+            const travelTime = parseInt(document.getElementById('travelTime').value);
+            
+            if (!name || !route || !stopOrder || !travelTime) {
+                alert('Please fill all fields');
+                return;
             }
+            
+            const newStudent = {
+                id: Date.now(),
+                name,
+                route,
+                stopOrder,
+                travelTime,
+                status: 'waiting'
+            };
+            
+            students.push(newStudent);
+            saveStudents();
+            renderStudentTable();
+            
+            // Clear form
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentRoute').value = '';
+            document.getElementById('stopOrder').value = '';
+            document.getElementById('travelTime').value = '';
+        };
 
-            // Initialize the app
-            (async function init() {
-                updateStatus('⏳ Loading Firebase...');
-                
-                const firebaseLoaded = await waitForFirebase();
-                
-                if (!firebaseLoaded) {
-                    updateStatus('❌ Using offline demo mode');
-                    setupDemoMode();
-                    return;
-                }
-                
-                try {
-                    // Firebase configuration
-                    const firebaseConfig = {
-                        apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
-                        authDomain: "maktab-transport.firebaseapp.com",
-                        projectId: "maktab-transport",
-                        storageBucket: "maktab-transport.firebasestorage.app",
-                        messagingSenderId: "575357634901",
-                        appId: "1:575357634901:web:4918fb77b0c21965af07dc"
-                    };
+        function renderStudentTable() {
+            const tbody = document.getElementById('studentTable');
+            if (!tbody) return;
+            
+            tbody.innerHTML = students.sort((a,b) => a.stopOrder - b.stopOrder).map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.route}</td>
+                    <td>${s.stopOrder}</td>
+                    <td>${s.travelTime} min</td>
+                    <td><span class="badge ${s.status === 'completed' ? 'success' : s.status === 'absent' ? 'danger' : ''}">${s.status}</span></td>
+                    <td><button onclick="deleteStudent(${s.id})" style="background: var(--danger); padding: 4px 8px;">🗑️</button></td>
+                </tr>
+            `).join('');
+        }
 
-                    // Initialize Firebase
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
-                    }
-                    
-                    const auth = firebase.auth();
-                    
-                    updateStatus('✅ Connected to Firebase');
-                    setTimeout(() => statusEl.classList.add('hidden'), 2000);
-                    
-                    // Login handler
-                    document.getElementById('loginBtn').onclick = async () => {
-                        const email = document.getElementById('email').value;
-                        const password = document.getElementById('password').value;
-                        
-                        if (!email || !password) {
-                            showError('Please enter both email and password');
-                            return;
-                        }
-                        
-                        try {
-                            updateStatus('⏳ Logging in...');
-                            await auth.signInWithEmailAndPassword(email, password);
-                            updateStatus('✅ Login successful!');
-                        } catch (e) {
-                            console.error(e);
-                            if (e.code === 'auth/user-not-found') {
-                                showError('User not found');
-                            } else if (e.code === 'auth/wrong-password') {
-                                showError('Wrong password');
-                            } else if (e.code === 'auth/too-many-requests') {
-                                showError('Too many attempts. Try later');
-                            } else {
-                                showError(e.message);
-                            }
-                            updateStatus('❌ Login failed');
-                        }
-                    };
+        window.deleteStudent = function(id) {
+            students = students.filter(s => s.id !== id);
+            saveStudents();
+            renderStudentTable();
+        };
 
-                    // Auth state
-                    auth.onAuthStateChanged(user => {
-                        if (user) {
-                            document.getElementById('loginSection').classList.add('hidden');
-                            document.getElementById('dashboardSection').classList.remove('hidden');
-                            document.getElementById('welcomeMsg').innerHTML = `
-                                <strong>Welcome!</strong><br>
-                                ${user.email}
-                            `;
-                        } else {
-                            document.getElementById('loginSection').classList.remove('hidden');
-                            document.getElementById('dashboardSection').classList.add('hidden');
-                        }
-                    });
+        // ==================== DRIVER FUNCTIONS ====================
+        window.startTrip = function() {
+            tripStarted = true;
+            tripStartTime = new Date();
+            currentStop = 0;
+            
+            // Reset all student statuses
+            students = students.map(s => ({ ...s, status: 'waiting' }));
+            saveStudents();
+            renderDriverView();
+        };
 
-                    window.logout = () => auth.signOut();
-
-                } catch (e) {
-                    console.error('Init error:', e);
-                    updateStatus('❌ Failed to initialize');
-                    setupDemoMode();
-                }
-            })();
-
-            // Demo mode when Firebase fails
-            function setupDemoMode() {
-                updateStatus('🔧 Running in demo mode');
-                
-                document.getElementById('loginBtn').onclick = () => {
-                    const email = document.getElementById('email').value || 'demo@user.com';
-                    showError('Demo mode: Use any email/password');
-                    
-                    // Simulate login
-                    setTimeout(() => {
-                        document.getElementById('loginSection').classList.add('hidden');
-                        document.getElementById('dashboardSection').classList.remove('hidden');
-                        document.getElementById('welcomeMsg').innerHTML = `
-                            <strong>Demo Mode</strong><br>
-                            ${email}
-                        `;
-                        statusEl.classList.add('hidden');
-                    }, 500);
-                };
-                
-                window.logout = () => {
-                    document.getElementById('loginSection').classList.remove('hidden');
-                    document.getElementById('dashboardSection').classList.add('hidden');
-                };
+        window.pickStudent = function(id) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                student.status = 'picked';
+                saveStudents();
+                renderDriverView();
             }
-        })();
+        };
+
+        window.dropStudent = function(id) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                student.status = 'completed';
+                saveStudents();
+                renderDriverView();
+            }
+        };
+
+        function renderDriverView() {
+            const routeStudents = students
+                .filter(s => s.route === 'Route A')
+                .sort((a,b) => a.stopOrder - b.stopOrder);
+            
+            const completed = routeStudents.filter(s => s.status === 'completed').length;
+            const total = routeStudents.length;
+            
+            document.getElementById('progressText').textContent = `${completed}/${total}`;
+            document.getElementById('progressBar').style.width = `${(completed/total)*100}%`;
+            
+            const listDiv = document.getElementById('driverStudentList');
+            listDiv.innerHTML = routeStudents.map(s => {
+                const isNext = !tripStarted ? false : 
+                    s.status === 'waiting' && routeStudents.filter(rs => rs.status === 'completed').length === s.stopOrder - 1;
+                
+                return `
+                    <div style="background: white; border-left: 4px solid ${isNext ? '#ca8a04' : s.status === 'completed' ? '#16a34a' : '#e2e8f0'}; padding: 16px; margin-bottom: 8px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>#${s.stopOrder} ${s.name}</strong>
+                                <div style="font-size: 0.9rem; color: #666;">${s.travelTime} min</div>
+                            </div>
+                            <div>
+                                ${s.status === 'waiting' ? `
+                                    <button onclick="pickStudent(${s.id})" style="background: var(--success); margin-right: 8px;">✅ Pick</button>
+                                    <button onclick="dropStudent(${s.id})" style="background: var(--primary);">🏁 Drop</button>
+                                ` : s.status === 'picked' ? `
+                                    <button onclick="dropStudent(${s.id})" style="background: var(--primary);">🏁 Drop</button>
+                                ` : `
+                                    <span style="color: #16a34a;">✓ Completed</span>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== PARENT FUNCTIONS ====================
+        function renderParentView() {
+            const student = students[0]; // Show first student for demo
+            document.getElementById('selectedStudent').textContent = student.name;
+            document.getElementById('studentStatus').textContent = student.status.toUpperCase();
+            
+            // Simple ETA calculation
+            if (tripStarted && student.status === 'waiting') {
+                const totalTime = students
+                    .filter(s => s.stopOrder < student.stopOrder && s.status !== 'completed')
+                    .reduce((acc, s) => acc + s.travelTime, 0);
+                
+                const eta = new Date(tripStartTime.getTime() + totalTime * 60000);
+                document.getElementById('studentEta').textContent = eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else if (student.status === 'completed') {
+                document.getElementById('studentEta').textContent = 'DROPPED';
+            } else {
+                document.getElementById('studentEta').textContent = '--:--';
+            }
+        }
+
+        window.markAbsent = function() {
+            if (students.length > 0) {
+                students[0].status = 'absent';
+                saveStudents();
+                renderParentView();
+            }
+        };
+
+        // ==================== UTILITIES ====================
+        function saveStudents() {
+            localStorage.setItem('students', JSON.stringify(students));
+        }
+
+        // Initialize
+        renderStudentTable();
     </script>
 </body>
 </html>
