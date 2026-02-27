@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Transport • Local Mode</title>
+    <title>School Transport • Complete System</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         :root {
@@ -32,38 +32,52 @@
         .header {
             background: var(--gray-800);
             color: white;
-            padding: 16px;
-            text-align: center;
-            font-size: 1.2rem;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 16px;
+            padding: 20px;
         }
 
         .card {
             background: white;
             border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .tab-bar {
             display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 24px;
             flex-wrap: wrap;
+            background: white;
+            padding: 12px;
+            border-radius: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .tab {
-            padding: 10px 20px;
-            background: white;
-            border: 1px solid var(--gray-200);
+            padding: 10px 24px;
+            background: transparent;
+            border: none;
             border-radius: 30px;
             cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: var(--gray-100);
         }
 
         .tab.active {
@@ -79,12 +93,18 @@
             display: block;
         }
 
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
         input, select {
             width: 100%;
-            padding: 12px;
-            margin: 8px 0;
+            padding: 12px 16px;
             border: 1px solid var(--gray-200);
-            border-radius: 8px;
+            border-radius: 10px;
+            font-size: 1rem;
         }
 
         button {
@@ -92,17 +112,27 @@
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
+            transition: all 0.2s;
         }
 
-        .btn-danger {
-            background: var(--danger);
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
         }
 
         .btn-success {
             background: var(--success);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+        }
+
+        .btn-danger {
+            background: var(--danger);
         }
 
         table {
@@ -110,95 +140,214 @@
             border-collapse: collapse;
         }
 
-        th, td {
-            padding: 12px 8px;
+        th {
+            background: var(--gray-50);
+            padding: 12px;
             text-align: left;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        td {
+            padding: 12px;
             border-bottom: 1px solid var(--gray-200);
         }
 
         .badge {
-            padding: 4px 8px;
+            display: inline-block;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
-            background: var(--gray-100);
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
-        .badge.success { background: var(--success); color: white; }
-        .badge.warning { background: var(--warning); color: white; }
-        .badge.danger { background: var(--danger); color: white; }
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
 
-        .hidden { display: none; }
+        .badge-warning {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .driver-card {
+            background: white;
+            border-left: 4px solid var(--gray-200);
+            padding: 20px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .driver-card.next {
+            border-left-color: var(--warning);
+            background: #fef9c3;
+        }
+
+        .driver-card.completed {
+            opacity: 0.7;
+            border-left-color: var(--success);
+        }
+
+        .progress-bar {
+            background: var(--gray-200);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            background: var(--success);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .duration-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gray-50);
+            padding: 4px;
+            border-radius: 30px;
+            width: fit-content;
+        }
+
+        .duration-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .login-card {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .tab-bar {
+                border-radius: 20px;
+                padding: 8px;
+            }
+            
+            .tab {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        🚌 School Transport System • Local Mode
-        <span style="float: right; font-size: 0.9rem;" id="userEmail"></span>
+        <div>🚌 School Transport System</div>
+        <div id="userEmail" style="font-size: 0.9rem;"></div>
     </div>
 
     <div class="container">
         <!-- Login Section -->
-        <div id="loginSection" class="card">
-            <h2 style="margin-bottom: 20px;">Login</h2>
-            <input type="email" id="email" placeholder="Email" value="admin@iqra.transport.com">
-            <input type="password" id="password" placeholder="Password" value="admin123">
-            <button onclick="handleLogin()">Login</button>
-            <p style="margin-top: 10px; color: var(--gray-600);">Demo credentials: admin@iqra.transport.com / admin123</p>
+        <div id="loginSection">
+            <div class="login-card">
+                <h2 style="margin-bottom: 20px; text-align: center;">Welcome Back</h2>
+                <input type="email" id="email" placeholder="Email" value="admin@school.com">
+                <input type="password" id="password" placeholder="Password" value="admin123">
+                <button onclick="handleLogin()" style="width: 100%;">Login</button>
+                <p style="margin-top: 20px; text-align: center; color: var(--gray-600);">
+                    Demo: admin@school.com / admin123
+                </p>
+            </div>
         </div>
 
         <!-- Dashboard Section -->
         <div id="dashboardSection" class="hidden">
             <div class="tab-bar">
-                <div class="tab active" onclick="switchTab('admin')">👥 Admin</div>
-                <div class="tab" onclick="switchTab('driver')">🚌 Driver</div>
-                <div class="tab" onclick="switchTab('parent')">👪 Parent</div>
-                <button onclick="logout()" style="margin-left: auto; background: var(--danger);">Logout</button>
+                <button class="tab active" onclick="switchTab('admin')">👥 Admin</button>
+                <button class="tab" onclick="switchTab('driver')">🚌 Driver</button>
+                <button class="tab" onclick="switchTab('parent')">👪 Parent</button>
+                <button class="tab" onclick="logout()" style="margin-left: auto; background: var(--danger); color: white;">Logout</button>
             </div>
 
             <!-- Admin Tab -->
             <div id="adminTab" class="tab-content active">
                 <div class="card">
-                    <h3>➕ Add Student</h3>
-                    <input type="text" id="studentName" placeholder="Student Name">
-                    <input type="text" id="studentRoute" placeholder="Route (e.g., Route A)">
-                    <input type="number" id="stopOrder" placeholder="Stop Order (1,2,3...)">
-                    <input type="number" id="travelTime" placeholder="Travel Time (minutes)">
-                    <button onclick="addStudent()">Add Student</button>
+                    <h3 style="margin-bottom: 20px;">➕ Add New Student</h3>
+                    <div class="form-grid">
+                        <input type="text" id="studentName" placeholder="Full Name">
+                        <input type="text" id="studentRoute" placeholder="Route (e.g., Route A)" value="Route A">
+                        <input type="number" id="stopOrder" placeholder="Stop Order (1,2,3...)">
+                        <input type="number" id="travelTime" placeholder="Travel Time (minutes)">
+                        <select id="studentSession">
+                            <option value="AM">AM Session</option>
+                            <option value="PM">PM Session</option>
+                        </select>
+                        <button onclick="addStudent()" style="grid-column: span 2;">Add Student</button>
+                    </div>
                 </div>
 
                 <div class="card">
-                    <h3>📋 Student List</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Route</th>
-                                <th>Stop</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentTable"></tbody>
-                    </table>
+                    <h3 style="margin-bottom: 20px;">📋 Student Database</h3>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Route</th>
+                                    <th>Stop</th>
+                                    <th>Time</th>
+                                    <th>Session</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTable"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- Driver Tab -->
             <div id="driverTab" class="tab-content">
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                         <h3>🚍 Route A - AM Trip</h3>
-                        <button class="btn-success" onclick="startTrip()">▶ Start Trip</button>
+                        <div>
+                            <button class="btn-success" onclick="startTrip()" id="startTripBtn">▶ Start Trip</button>
+                            <button class="btn-danger" onclick="endTrip()" id="endTripBtn" style="display: none;">⏹ End Trip</button>
+                        </div>
                     </div>
                     
                     <div style="margin: 20px 0;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Progress</span>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Route Progress</span>
                             <span id="progressText">0/0</span>
                         </div>
-                        <div style="background: var(--gray-200); height: 8px; border-radius: 4px; margin-top: 4px;">
-                            <div id="progressBar" style="background: var(--success); height: 8px; border-radius: 4px; width: 0%;"></div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar"></div>
                         </div>
                     </div>
 
@@ -208,14 +357,9 @@
 
             <!-- Parent Tab -->
             <div id="parentTab" class="tab-content">
-                <div class="card" id="parentView">
-                    <h3>👤 Student: <span id="selectedStudent">Select a student</span></h3>
-                    <div style="background: var(--gray-50); padding: 20px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 1.2rem; color: var(--gray-600;">Status</div>
-                        <div id="studentStatus" style="font-size: 2rem; font-weight: bold; margin: 10px 0;">--</div>
-                        <div id="studentEta" style="font-size: 1.5rem;">--:--</div>
-                    </div>
-                    <button class="btn-danger" style="margin-top: 20px;" onclick="markAbsent()">📅 Mark Absent</button>
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">👪 My Children</h3>
+                    <div id="parentStudentList"></div>
                 </div>
             </div>
         </div>
@@ -224,28 +368,27 @@
     <script>
         // ==================== DATA STORAGE ====================
         let students = JSON.parse(localStorage.getItem('students')) || [
-            { id: 1, name: 'Mehnaz', route: 'Route A', stopOrder: 1, travelTime: 25, status: 'waiting' },
-            { id: 2, name: 'Hasan', route: 'Route A', stopOrder: 2, travelTime: 15, status: 'waiting' },
-            { id: 3, name: 'Yazan', route: 'Route A', stopOrder: 3, travelTime: 10, status: 'waiting' },
-            { id: 4, name: 'Usman', route: 'Route A', stopOrder: 4, travelTime: 15, status: 'waiting' },
-            { id: 5, name: 'Nojima', route: 'Route A', stopOrder: 4, travelTime: 15, status: 'waiting' },
-            { id: 6, name: 'Nabiha', route: 'Route A', stopOrder: 5, travelTime: 25, status: 'waiting' },
-            { id: 7, name: 'Naba', route: 'Route A', stopOrder: 5, travelTime: 25, status: 'waiting' },
-            { id: 8, name: 'Takya', route: 'Route A', stopOrder: 6, travelTime: 15, status: 'waiting' },
-            { id: 9, name: 'Omar', route: 'Route A', stopOrder: 7, travelTime: 10, status: 'waiting' }
+            { id: 1, name: 'Mehnaz', route: 'Route A', stopOrder: 1, travelTime: 25, session: 'AM', status: 'waiting' },
+            { id: 2, name: 'Hasan', route: 'Route A', stopOrder: 2, travelTime: 15, session: 'AM', status: 'waiting' },
+            { id: 3, name: 'Yazan', route: 'Route A', stopOrder: 3, travelTime: 10, session: 'AM', status: 'waiting' },
+            { id: 4, name: 'Usman', route: 'Route A', stopOrder: 4, travelTime: 15, session: 'AM', status: 'waiting' },
+            { id: 5, name: 'Nojima', route: 'Route A', stopOrder: 4, travelTime: 15, session: 'AM', status: 'waiting' },
+            { id: 6, name: 'Nabiha', route: 'Route A', stopOrder: 5, travelTime: 25, session: 'AM', status: 'waiting' },
+            { id: 7, name: 'Naba', route: 'Route A', stopOrder: 5, travelTime: 25, session: 'AM', status: 'waiting' },
+            { id: 8, name: 'Takya', route: 'Route A', stopOrder: 6, travelTime: 15, session: 'AM', status: 'waiting' },
+            { id: 9, name: 'Omar', route: 'Route A', stopOrder: 7, travelTime: 10, session: 'AM', status: 'waiting' }
         ];
 
         let currentUser = null;
         let tripStarted = false;
         let tripStartTime = null;
-        let currentStop = 0;
+        let currentStopIndex = 0;
 
         // ==================== LOGIN ====================
         window.handleLogin = function() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            // Simple demo login
             if (email && password) {
                 currentUser = { email, role: 'admin' };
                 document.getElementById('loginSection').classList.add('hidden');
@@ -287,6 +430,7 @@
             const route = document.getElementById('studentRoute').value;
             const stopOrder = parseInt(document.getElementById('stopOrder').value);
             const travelTime = parseInt(document.getElementById('travelTime').value);
+            const session = document.getElementById('studentSession').value;
             
             if (!name || !route || !stopOrder || !travelTime) {
                 alert('Please fill all fields');
@@ -299,6 +443,7 @@
                 route,
                 stopOrder,
                 travelTime,
+                session,
                 status: 'waiting'
             };
             
@@ -308,7 +453,6 @@
             
             // Clear form
             document.getElementById('studentName').value = '';
-            document.getElementById('studentRoute').value = '';
             document.getElementById('stopOrder').value = '';
             document.getElementById('travelTime').value = '';
         };
@@ -317,37 +461,59 @@
             const tbody = document.getElementById('studentTable');
             if (!tbody) return;
             
-            tbody.innerHTML = students.sort((a,b) => a.stopOrder - b.stopOrder).map(s => `
-                <tr>
-                    <td>${s.name}</td>
-                    <td>${s.route}</td>
-                    <td>${s.stopOrder}</td>
-                    <td>${s.travelTime} min</td>
-                    <td><span class="badge ${s.status === 'completed' ? 'success' : s.status === 'absent' ? 'danger' : ''}">${s.status}</span></td>
-                    <td><button onclick="deleteStudent(${s.id})" style="background: var(--danger); padding: 4px 8px;">🗑️</button></td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = students
+                .sort((a,b) => a.stopOrder - b.stopOrder)
+                .map(s => `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.route}</td>
+                        <td>${s.stopOrder}</td>
+                        <td>${s.travelTime} min</td>
+                        <td>${s.session}</td>
+                        <td>
+                            <span class="badge ${s.status === 'completed' ? 'badge-success' : s.status === 'absent' ? 'badge-danger' : 'badge-warning'}">
+                                ${s.status}
+                            </span>
+                        </td>
+                        <td>
+                            <button onclick="deleteStudent(${s.id})" style="background: var(--danger); padding: 6px 12px;">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
         }
 
         window.deleteStudent = function(id) {
-            students = students.filter(s => s.id !== id);
-            saveStudents();
-            renderStudentTable();
+            if (confirm('Delete this student?')) {
+                students = students.filter(s => s.id !== id);
+                saveStudents();
+                renderStudentTable();
+            }
         };
 
         // ==================== DRIVER FUNCTIONS ====================
         window.startTrip = function() {
             tripStarted = true;
             tripStartTime = new Date();
-            currentStop = 0;
+            currentStopIndex = 0;
             
-            // Reset all student statuses
+            // Reset status for all students
             students = students.map(s => ({ ...s, status: 'waiting' }));
             saveStudents();
+            
+            document.getElementById('startTripBtn').style.display = 'none';
+            document.getElementById('endTripBtn').style.display = 'inline-block';
+            
             renderDriverView();
         };
 
-        window.pickStudent = function(id) {
+        window.endTrip = function() {
+            tripStarted = false;
+            document.getElementById('startTripBtn').style.display = 'inline-block';
+            document.getElementById('endTripBtn').style.display = 'none';
+            renderDriverView();
+        };
+
+        window.pickupStudent = function(id) {
             const student = students.find(s => s.id === id);
             if (student) {
                 student.status = 'picked';
@@ -365,9 +531,18 @@
             }
         };
 
+        window.adjustTime = function(id, delta) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                student.travelTime = Math.max(1, student.travelTime + delta);
+                saveStudents();
+                renderDriverView();
+            }
+        };
+
         function renderDriverView() {
             const routeStudents = students
-                .filter(s => s.route === 'Route A')
+                .filter(s => s.route === 'Route A' && s.session === 'AM')
                 .sort((a,b) => a.stopOrder - b.stopOrder);
             
             const completed = routeStudents.filter(s => s.status === 'completed').length;
@@ -377,26 +552,53 @@
             document.getElementById('progressBar').style.width = `${(completed/total)*100}%`;
             
             const listDiv = document.getElementById('driverStudentList');
-            listDiv.innerHTML = routeStudents.map(s => {
-                const isNext = !tripStarted ? false : 
-                    s.status === 'waiting' && routeStudents.filter(rs => rs.status === 'completed').length === s.stopOrder - 1;
+            listDiv.innerHTML = routeStudents.map((s, index) => {
+                const isNext = tripStarted && 
+                              s.status === 'waiting' && 
+                              routeStudents.slice(0, index).every(st => st.status === 'completed');
+                
+                // Calculate ETA
+                let eta = '--:--';
+                if (tripStarted && tripStartTime) {
+                    let cumulativeTime = 0;
+                    for (let i = 0; i < index; i++) {
+                        if (routeStudents[i].status !== 'completed') {
+                            cumulativeTime += routeStudents[i].travelTime;
+                        }
+                    }
+                    
+                    const etaTime = new Date(tripStartTime.getTime() + cumulativeTime * 60000);
+                    eta = etaTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
                 
                 return `
-                    <div style="background: white; border-left: 4px solid ${isNext ? '#ca8a04' : s.status === 'completed' ? '#16a34a' : '#e2e8f0'}; padding: 16px; margin-bottom: 8px; border-radius: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong>#${s.stopOrder} ${s.name}</strong>
-                                <div style="font-size: 0.9rem; color: #666;">${s.travelTime} min</div>
+                    <div class="driver-card ${isNext ? 'next' : ''} ${s.status === 'completed' ? 'completed' : ''}">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="background: var(--gray-100); padding: 4px 10px; border-radius: 20px; font-weight: bold;">#${s.stopOrder}</span>
+                                    <strong>${s.name}</strong>
+                                    ${s.status === 'completed' ? '<span class="badge badge-success">✓ DONE</span>' : ''}
+                                </div>
+                                <div style="margin-top: 10px; display: flex; align-items: center; gap: 20px;">
+                                    <div class="duration-control">
+                                        <button class="duration-btn" onclick="adjustTime(${s.id}, -1)">−</button>
+                                        <span style="min-width: 40px; text-align: center;">${s.travelTime}</span>
+                                        <button class="duration-btn" onclick="adjustTime(${s.id}, 1)">+</button>
+                                        <span style="margin-left: 8px; color: var(--gray-600);">min</span>
+                                    </div>
+                                    <span style="color: var(--gray-600);">ETA: <strong>${eta}</strong></span>
+                                </div>
                             </div>
-                            <div>
+                            
+                            <div style="display: flex; gap: 8px;">
                                 ${s.status === 'waiting' ? `
-                                    <button onclick="pickStudent(${s.id})" style="background: var(--success); margin-right: 8px;">✅ Pick</button>
-                                    <button onclick="dropStudent(${s.id})" style="background: var(--primary);">🏁 Drop</button>
+                                    <button onclick="pickupStudent(${s.id})" class="btn-success">✅ Pickup</button>
+                                    <button onclick="dropStudent(${s.id})" class="btn-warning">🏁 Drop</button>
                                 ` : s.status === 'picked' ? `
-                                    <button onclick="dropStudent(${s.id})" style="background: var(--primary);">🏁 Drop</button>
-                                ` : `
-                                    <span style="color: #16a34a;">✓ Completed</span>
-                                `}
+                                    <button onclick="dropStudent(${s.id})" class="btn-warning">🏁 Drop</button>
+                                ` : ''}
+                                <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${s.name}', '_blank')" style="background: var(--gray-200); color: black;">🗺️ Map</button>
                             </div>
                         </div>
                     </div>
@@ -406,28 +608,68 @@
 
         // ==================== PARENT FUNCTIONS ====================
         function renderParentView() {
-            const student = students[0]; // Show first student for demo
-            document.getElementById('selectedStudent').textContent = student.name;
-            document.getElementById('studentStatus').textContent = student.status.toUpperCase();
+            const parentStudents = students.slice(0, 3); // Show first 3 students for demo
             
-            // Simple ETA calculation
-            if (tripStarted && student.status === 'waiting') {
-                const totalTime = students
-                    .filter(s => s.stopOrder < student.stopOrder && s.status !== 'completed')
-                    .reduce((acc, s) => acc + s.travelTime, 0);
+            const listDiv = document.getElementById('parentStudentList');
+            listDiv.innerHTML = parentStudents.map(s => {
+                let statusText = s.status;
+                let statusClass = 'badge-warning';
                 
-                const eta = new Date(tripStartTime.getTime() + totalTime * 60000);
-                document.getElementById('studentEta').textContent = eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } else if (student.status === 'completed') {
-                document.getElementById('studentEta').textContent = 'DROPPED';
-            } else {
-                document.getElementById('studentEta').textContent = '--:--';
-            }
+                if (s.status === 'completed') {
+                    statusText = 'DROPPED';
+                    statusClass = 'badge-success';
+                } else if (s.status === 'absent') {
+                    statusClass = 'badge-danger';
+                }
+                
+                return `
+                    <div style="background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--gray-200);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4>${s.name}</h4>
+                            <span class="badge ${statusClass}">${statusText}</span>
+                        </div>
+                        
+                        <div style="background: var(--gray-50); padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="color: var(--gray-600); font-size: 0.9rem;">Current Status</div>
+                            <div style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">
+                                ${s.status === 'completed' ? '🏠 Home' : '🚌 On the Way'}
+                            </div>
+                            <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">
+                                ${calculateEtaForStudent(s)}
+                            </div>
+                        </div>
+                        
+                        <button onclick="markAbsent(${s.id})" style="background: var(--danger); width: 100%; margin-top: 15px;">
+                            📅 Mark Absent
+                        </button>
+                    </div>
+                `;
+            }).join('');
         }
 
-        window.markAbsent = function() {
-            if (students.length > 0) {
-                students[0].status = 'absent';
+        function calculateEtaForStudent(student) {
+            if (!tripStarted || student.status === 'completed') return '--:--';
+            
+            const routeStudents = students
+                .filter(s => s.route === 'Route A' && s.session === 'AM')
+                .sort((a,b) => a.stopOrder - b.stopOrder);
+            
+            let cumulativeTime = 0;
+            for (let i = 0; i < routeStudents.length; i++) {
+                if (routeStudents[i].id === student.id) break;
+                if (routeStudents[i].status !== 'completed') {
+                    cumulativeTime += routeStudents[i].travelTime;
+                }
+            }
+            
+            const etaTime = new Date(tripStartTime.getTime() + cumulativeTime * 60000);
+            return etaTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        window.markAbsent = function(id) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                student.status = 'absent';
                 saveStudents();
                 renderParentView();
             }
