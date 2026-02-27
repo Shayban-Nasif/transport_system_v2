@@ -6,15 +6,19 @@
     <title>School Transport</title>
     <style>
         body { font-family: Arial; padding: 20px; max-width: 400px; margin: 0 auto; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #2563eb; color: white; border: none; cursor: pointer; }
         .hidden { display: none; }
-        #errorMsg { color: red; }
+        #errorMsg { color: red; margin: 10px 0; }
+        #status { color: #666; font-size: 0.9em; margin: 10px 0; }
     </style>
 </head>
 <body>
     <h1>🚌 School Transport</h1>
     
-    <div id="loginSection">
+    <div id="status">Loading Firebase...</div>
+    
+    <div id="loginSection" class="hidden">
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button id="loginBtn">Login</button>
@@ -26,86 +30,102 @@
         <button onclick="logout()">Logout</button>
     </div>
 
-    <!-- Load Firebase using multiple methods -->
+    <!-- Try multiple CDN sources -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/dist/firebase-app.js"></script>
+    <script src="https://unpkg.com/firebase@10.7.1/dist/firebase-app.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-    
-    <script>
-        // Wait for Firebase to load
-        function waitForFirebase() {
-            return new Promise((resolve) => {
-                if (window.firebase) {
-                    resolve();
-                    return;
-                }
-                
-                // Check every 100ms
-                const interval = setInterval(() => {
-                    if (window.firebase) {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 100);
-                
-                // Timeout after 5 seconds
-                setTimeout(() => {
-                    clearInterval(interval);
-                    resolve(); // Resolve anyway, let it fail gracefully
-                }, 5000);
-            });
-        }
 
-        // Initialize app
-        (async function() {
-            await waitForFirebase();
+    <script>
+        (function() {
+            const statusEl = document.getElementById('status');
             
-            if (!window.firebase) {
-                document.getElementById('errorMsg').innerText = 'Firebase failed to load. Please refresh.';
-                return;
+            // Function to check if Firebase is loaded
+            function checkFirebase() {
+                return typeof firebase !== 'undefined' && firebase.app;
             }
 
-            // Firebase Config
-            const firebaseConfig = {
-                apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
-                authDomain: "maktab-transport.firebaseapp.com",
-                projectId: "maktab-transport",
-                storageBucket: "maktab-transport.firebasestorage.app",
-                messagingSenderId: "575357634901",
-                appId: "1:575357634901:web:4918fb77b0c21965af07dc"
-            };
-
-            // Initialize
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            
-            console.log('✅ Firebase ready');
-
-            // Login
-            document.getElementById('loginBtn').onclick = async () => {
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                
-                try {
-                    await auth.signInWithEmailAndPassword(email, password);
-                } catch (e) {
-                    document.getElementById('errorMsg').innerText = e.message;
-                }
-            };
-
-            // Auth state
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('dashboardSection').classList.remove('hidden');
-                    document.getElementById('welcomeMsg').innerText = `Welcome ${user.email}`;
+            // Try to initialize once Firebase is available
+            function initWhenReady() {
+                if (checkFirebase()) {
+                    statusEl.textContent = 'Firebase loaded! Initializing...';
+                    initializeApp();
                 } else {
-                    document.getElementById('loginSection').classList.remove('hidden');
-                    document.getElementById('dashboardSection').classList.add('hidden');
+                    statusEl.textContent = 'Still waiting for Firebase...';
+                    setTimeout(initWhenReady, 500);
                 }
-            });
+            }
 
-            window.logout = () => auth.signOut();
+            // Initialize the app
+            function initializeApp() {
+                try {
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
+                        authDomain: "maktab-transport.firebaseapp.com",
+                        projectId: "maktab-transport",
+                        storageBucket: "maktab-transport.firebasestorage.app",
+                        messagingSenderId: "575357634901",
+                        appId: "1:575357634901:web:4918fb77b0c21965af07dc"
+                    };
+
+                    // Initialize Firebase
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+                    
+                    const auth = firebase.auth();
+                    
+                    statusEl.textContent = '✅ Firebase ready';
+                    statusEl.style.color = 'green';
+                    
+                    // Show login section
+                    document.getElementById('loginSection').classList.remove('hidden');
+                    
+                    // Login handler
+                    document.getElementById('loginBtn').onclick = async () => {
+                        const email = document.getElementById('email').value;
+                        const password = document.getElementById('password').value;
+                        
+                        if (!email || !password) {
+                            document.getElementById('errorMsg').innerText = 'Please enter email and password';
+                            return;
+                        }
+                        
+                        try {
+                            statusEl.textContent = 'Logging in...';
+                            await auth.signInWithEmailAndPassword(email, password);
+                            statusEl.textContent = 'Login successful!';
+                        } catch (e) {
+                            document.getElementById('errorMsg').innerText = e.message;
+                            statusEl.textContent = 'Login failed';
+                        }
+                    };
+
+                    // Auth state
+                    auth.onAuthStateChanged(user => {
+                        if (user) {
+                            document.getElementById('loginSection').classList.add('hidden');
+                            document.getElementById('dashboardSection').classList.remove('hidden');
+                            document.getElementById('welcomeMsg').innerText = `Welcome ${user.email}`;
+                            statusEl.classList.add('hidden');
+                        } else {
+                            document.getElementById('loginSection').classList.remove('hidden');
+                            document.getElementById('dashboardSection').classList.add('hidden');
+                        }
+                    });
+
+                    window.logout = () => auth.signOut();
+
+                } catch (e) {
+                    statusEl.textContent = '❌ Error: ' + e.message;
+                    console.error(e);
+                }
+            }
+
+            // Start checking for Firebase
+            setTimeout(initWhenReady, 100);
         })();
     </script>
 </body>
