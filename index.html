@@ -677,10 +677,15 @@ window.handleLogin = async (event) => {
         }
 
         try {
-            const usersQuery = await db.collection('users').where('uid', '==', user.uid).get();
-            if (usersQuery.empty) {
-                alert('User profile not found. Please contact admin.');
-                return;
+            // Find user by uid field (not document ID)
+                const usersQuery = await db.collection('users').where('uid', '==', user.uid).get();
+                if (!usersQuery.empty) {
+                    currentUserData = { id: usersQuery.docs[0].id, ...usersQuery.docs[0].data() };
+                } else {
+                    alert('User not found in database');
+                    await auth.signOut();
+                    return;
+                }
             }
 
             currentUserData = { id: usersQuery.docs[0].id, ...usersQuery.docs[0].data() };
