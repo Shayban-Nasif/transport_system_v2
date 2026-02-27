@@ -544,10 +544,10 @@
                 <h2>Welcome Back</h2>
                 <p style="color: var(--gray-600); margin-bottom: 20px;">School Transport System</p>
                 
-                <form id="loginForm">
+                <form id="loginForm" onsubmit="return false;">
                     <input type="email" id="email" placeholder="Email" required>
                     <input type="password" id="password" placeholder="Password" required>
-                    <button type="submit">Login</button>
+                    <button type="button" id="loginBtn">Login</button>
                 </form>
             </div>
         </div>
@@ -588,6 +588,16 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // ==================== DEBUG ====================
+        console.log('Firebase initialized');
+        console.log('Auth object:', auth ? 'OK' : 'Failed');
+        console.log('Firestore:', db ? 'OK' : 'Failed');
+        
+        // Test connection
+        db.collection('users').limit(1).get()
+            .then(() => console.log('✅ Firestore connected'))
+            .catch(err => console.error('❌ Firestore error:', err));
+
         // ==================== GLOBAL STATE ====================
         let currentUserData = null;
         let routesList = [];
@@ -620,21 +630,39 @@
         }
 
         // ==================== AUTH ====================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        // ==================== SIMPLE LOGIN ====================
+        document.getElementById('loginBtn').addEventListener('click', async function() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            
             try {
+                console.log('Attempting login...');
                 await auth.signInWithEmailAndPassword(email, password);
+                // Don't do anything here - onAuthStateChanged will handle it
             } catch (error) {
+                console.error('Login error:', error);
+                
                 let message = 'Login failed: ';
                 if (error.code === 'auth/user-not-found') message += 'User not found';
                 else if (error.code === 'auth/wrong-password') message += 'Wrong password';
-                else if (error.code === 'auth/too-many-requests') message += 'Too many attempts';
+                else if (error.code === 'auth/too-many-requests') message += 'Too many attempts. Try later';
+                else if (error.code === 'auth/invalid-email') message += 'Invalid email format';
+                else if (error.code === 'auth/network-request-failed') message += 'Network error';
                 else message += error.message;
+                
                 alert(message);
+            }
+        });
+        
+        // Also allow Enter key to trigger login
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginBtn').click();
             }
         });
 
