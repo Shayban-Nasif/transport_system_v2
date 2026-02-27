@@ -11,12 +11,14 @@
         .hidden { display: none; }
         #errorMsg { color: red; margin: 10px 0; }
         #status { color: #666; font-size: 0.9em; margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+        .success { color: green; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>🚌 School Transport</h1>
     
     <div id="status">Loading Firebase...</div>
+    <div id="scriptStatus"></div>
     
     <div id="loginSection" class="hidden">
         <input type="email" id="email" placeholder="Email">
@@ -30,73 +32,59 @@
         <button onclick="logout()">Logout</button>
     </div>
 
-    <!-- Load Firebase using the most reliable CDN -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-
     <script>
         (function() {
             const statusEl = document.getElementById('status');
-            let attempts = 0;
-            const maxAttempts = 20;
-
-            function updateStatus(message) {
-                console.log(message);
-                statusEl.textContent = message;
-            }
-
-            function checkFirebase() {
-                attempts++;
-                
-                if (typeof firebase !== 'undefined' && firebase.app) {
-                    updateStatus('✅ Firebase loaded! Initializing...');
-                    initializeApp();
-                    return true;
+            const scriptStatus = document.getElementById('scriptStatus');
+            
+            // Load scripts one by one and track them
+            const scripts = [
+                'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
+                'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js',
+                'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
+            ];
+            
+            let loadedCount = 0;
+            
+            function loadScript(index) {
+                if (index >= scripts.length) {
+                    statusEl.innerHTML = '✅ All scripts loaded. Initializing...';
+                    setTimeout(initializeApp, 500);
+                    return;
                 }
                 
-                if (attempts >= maxAttempts) {
-                    updateStatus('❌ Firebase failed to load. Using fallback...');
-                    useFallback();
-                    return false;
-                }
-                
-                updateStatus(`Waiting for Firebase... (attempt ${attempts}/${maxAttempts})`);
-                setTimeout(checkFirebase, 500);
-            }
-
-            function useFallback() {
-                // Create a mock auth for testing
-                window.firebase = {
-                    initializeApp: function() { 
-                        console.log('Fallback mode active');
-                        return { 
-                            auth: () => ({
-                                signInWithEmailAndPassword: async (email, password) => {
-                                    updateStatus('✅ Demo mode: Login successful!');
-                                    setTimeout(() => {
-                                        document.getElementById('loginSection').classList.add('hidden');
-                                        document.getElementById('dashboardSection').classList.remove('hidden');
-                                        document.getElementById('welcomeMsg').innerText = `Welcome ${email} (Demo Mode)`;
-                                        statusEl.classList.add('hidden');
-                                    }, 500);
-                                    return { user: { email, uid: '123' } };
-                                },
-                                onAuthStateChanged: (callback) => {
-                                    // Call with null initially
-                                    callback(null);
-                                }
-                            })
-                        };
-                    },
-                    apps: []
+                const script = document.createElement('script');
+                script.src = scripts[index];
+                script.onload = () => {
+                    loadedCount++;
+                    scriptStatus.innerHTML = `📦 Loaded: ${scripts[index].split('/').pop()} (${loadedCount}/${scripts.length})`;
+                    loadScript(index + 1);
                 };
-                
-                initializeApp();
+                script.onerror = () => {
+                    scriptStatus.innerHTML = `❌ Failed to load: ${scripts[index].split('/').pop()}`;
+                    // Try next anyway
+                    loadScript(index + 1);
+                };
+                document.head.appendChild(script);
             }
-
+            
+            // Start loading
+            loadScript(0);
+            
             function initializeApp() {
                 try {
+                    // Check if Firebase is fully loaded
+                    if (typeof firebase === 'undefined') {
+                        statusEl.innerHTML = '❌ Firebase not available';
+                        return;
+                    }
+                    
+                    if (!firebase.auth) {
+                        statusEl.innerHTML = '❌ Firebase Auth not loaded. Retrying...';
+                        setTimeout(initializeApp, 1000);
+                        return;
+                    }
+                    
                     const firebaseConfig = {
                         apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
                         authDomain: "maktab-transport.firebaseapp.com",
@@ -113,8 +101,8 @@
                     
                     const auth = firebase.auth();
                     
-                    updateStatus('✅ Ready to login');
-                    statusEl.style.color = 'green';
+                    statusEl.innerHTML = '✅ Firebase ready!';
+                    statusEl.classList.add('success');
                     
                     // Show login section
                     document.getElementById('loginSection').classList.remove('hidden');
@@ -130,12 +118,11 @@
                         }
                         
                         try {
-                            updateStatus('Logging in...');
+                            statusEl.innerHTML = '🔄 Logging in...';
                             await auth.signInWithEmailAndPassword(email, password);
-                            updateStatus('Login successful!');
                         } catch (e) {
                             document.getElementById('errorMsg').innerText = e.message;
-                            updateStatus('Login failed: ' + e.message);
+                            statusEl.innerHTML = '❌ Login failed';
                         }
                     };
 
@@ -155,13 +142,10 @@
                     window.logout = () => auth.signOut();
 
                 } catch (e) {
-                    statusEl.textContent = '❌ Error: ' + e.message;
+                    statusEl.innerHTML = '❌ Error: ' + e.message;
                     console.error(e);
                 }
             }
-
-            // Start checking
-            setTimeout(checkFirebase, 100);
         })();
     </script>
 </body>
