@@ -5,86 +5,149 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>School Transport</title>
     <style>
-        body { font-family: Arial; padding: 20px; max-width: 400px; margin: 0 auto; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #2563eb; color: white; border: none; cursor: pointer; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            padding: 20px; 
+            max-width: 400px; 
+            margin: 0 auto; 
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 50px;
+        }
+        h1 { 
+            text-align: center; 
+            color: #1e293b;
+            margin-bottom: 30px;
+        }
+        input, button { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 8px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button { 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: 600;
+            margin-top: 16px;
+        }
+        button:hover { background: #1d4ed8; }
         .hidden { display: none; }
-        #errorMsg { color: red; margin: 10px 0; }
-        #status { color: #666; font-size: 0.9em; margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px; }
-        .success { color: green; font-weight: bold; }
+        #errorMsg { 
+            color: #dc2626; 
+            margin: 10px 0; 
+            font-size: 14px;
+            text-align: center;
+        }
+        #status { 
+            color: #4b5563; 
+            font-size: 14px; 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: #f3f4f6; 
+            border-radius: 8px; 
+            text-align: center;
+        }
+        .success { color: #059669; font-weight: bold; }
+        .welcome { text-align: center; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h1>🚌 School Transport</h1>
-    
-    <div id="status">Loading Firebase...</div>
-    <div id="scriptStatus"></div>
-    
-    <div id="loginSection" class="hidden">
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
-        <button id="loginBtn">Login</button>
-        <div id="errorMsg"></div>
+    <div class="card">
+        <h1>🚌 School Transport</h1>
+        
+        <div id="status">Loading...</div>
+        
+        <div id="loginSection">
+            <input type="email" id="email" placeholder="Email address">
+            <input type="password" id="password" placeholder="Password">
+            <button id="loginBtn">Sign In</button>
+            <div id="errorMsg"></div>
+        </div>
+
+        <div id="dashboardSection" class="hidden">
+            <div class="welcome" id="welcomeMsg"></div>
+            <button onclick="logout()" style="background: #dc2626;">Sign Out</button>
+        </div>
     </div>
 
-    <div id="dashboardSection" class="hidden">
-        <h2 id="welcomeMsg"></h2>
-        <button onclick="logout()">Logout</button>
-    </div>
+    <!-- Load Firebase from the most reliable CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/dist/firebase-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/dist/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/dist/firebase-firestore.js"></script>
 
     <script>
         (function() {
             const statusEl = document.getElementById('status');
-            const scriptStatus = document.getElementById('scriptStatus');
+            const errorEl = document.getElementById('errorMsg');
             
-            // Load scripts one by one and track them
-            const scripts = [
-                'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
-                'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js',
-                'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
-            ];
-            
-            let loadedCount = 0;
-            
-            function loadScript(index) {
-                if (index >= scripts.length) {
-                    statusEl.innerHTML = '✅ All scripts loaded. Initializing...';
-                    setTimeout(initializeApp, 500);
+            function updateStatus(msg, isError = false) {
+                console.log(msg);
+                statusEl.textContent = msg;
+                if (isError) {
+                    statusEl.style.color = '#dc2626';
+                } else {
+                    statusEl.style.color = '#4b5563';
+                }
+            }
+
+            function showError(msg) {
+                errorEl.textContent = msg;
+            }
+
+            // Wait for Firebase to be ready
+            function waitForFirebase() {
+                return new Promise((resolve) => {
+                    let attempts = 0;
+                    const maxAttempts = 30;
+                    
+                    const check = () => {
+                        attempts++;
+                        
+                        // Check if Firebase is fully loaded
+                        if (window.firebase && 
+                            window.firebase.auth && 
+                            window.firebase.firestore) {
+                            resolve(true);
+                            return;
+                        }
+                        
+                        if (attempts >= maxAttempts) {
+                            resolve(false);
+                            return;
+                        }
+                        
+                        setTimeout(check, 200);
+                    };
+                    
+                    check();
+                });
+            }
+
+            // Initialize the app
+            (async function init() {
+                updateStatus('⏳ Loading Firebase...');
+                
+                const firebaseLoaded = await waitForFirebase();
+                
+                if (!firebaseLoaded) {
+                    updateStatus('❌ Using offline demo mode');
+                    setupDemoMode();
                     return;
                 }
                 
-                const script = document.createElement('script');
-                script.src = scripts[index];
-                script.onload = () => {
-                    loadedCount++;
-                    scriptStatus.innerHTML = `📦 Loaded: ${scripts[index].split('/').pop()} (${loadedCount}/${scripts.length})`;
-                    loadScript(index + 1);
-                };
-                script.onerror = () => {
-                    scriptStatus.innerHTML = `❌ Failed to load: ${scripts[index].split('/').pop()}`;
-                    // Try next anyway
-                    loadScript(index + 1);
-                };
-                document.head.appendChild(script);
-            }
-            
-            // Start loading
-            loadScript(0);
-            
-            function initializeApp() {
                 try {
-                    // Check if Firebase is fully loaded
-                    if (typeof firebase === 'undefined') {
-                        statusEl.innerHTML = '❌ Firebase not available';
-                        return;
-                    }
-                    
-                    if (!firebase.auth) {
-                        statusEl.innerHTML = '❌ Firebase Auth not loaded. Retrying...';
-                        setTimeout(initializeApp, 1000);
-                        return;
-                    }
-                    
+                    // Firebase configuration
                     const firebaseConfig = {
                         apiKey: "AIzaSyCS163x5b5-MJXxJGwbjE0IlO7R58CkJMg",
                         authDomain: "maktab-transport.firebaseapp.com",
@@ -101,11 +164,8 @@
                     
                     const auth = firebase.auth();
                     
-                    statusEl.innerHTML = '✅ Firebase ready!';
-                    statusEl.classList.add('success');
-                    
-                    // Show login section
-                    document.getElementById('loginSection').classList.remove('hidden');
+                    updateStatus('✅ Connected to Firebase');
+                    setTimeout(() => statusEl.classList.add('hidden'), 2000);
                     
                     // Login handler
                     document.getElementById('loginBtn').onclick = async () => {
@@ -113,16 +173,26 @@
                         const password = document.getElementById('password').value;
                         
                         if (!email || !password) {
-                            document.getElementById('errorMsg').innerText = 'Please enter email and password';
+                            showError('Please enter both email and password');
                             return;
                         }
                         
                         try {
-                            statusEl.innerHTML = '🔄 Logging in...';
+                            updateStatus('⏳ Logging in...');
                             await auth.signInWithEmailAndPassword(email, password);
+                            updateStatus('✅ Login successful!');
                         } catch (e) {
-                            document.getElementById('errorMsg').innerText = e.message;
-                            statusEl.innerHTML = '❌ Login failed';
+                            console.error(e);
+                            if (e.code === 'auth/user-not-found') {
+                                showError('User not found');
+                            } else if (e.code === 'auth/wrong-password') {
+                                showError('Wrong password');
+                            } else if (e.code === 'auth/too-many-requests') {
+                                showError('Too many attempts. Try later');
+                            } else {
+                                showError(e.message);
+                            }
+                            updateStatus('❌ Login failed');
                         }
                     };
 
@@ -131,8 +201,10 @@
                         if (user) {
                             document.getElementById('loginSection').classList.add('hidden');
                             document.getElementById('dashboardSection').classList.remove('hidden');
-                            document.getElementById('welcomeMsg').innerText = `Welcome ${user.email}`;
-                            statusEl.classList.add('hidden');
+                            document.getElementById('welcomeMsg').innerHTML = `
+                                <strong>Welcome!</strong><br>
+                                ${user.email}
+                            `;
                         } else {
                             document.getElementById('loginSection').classList.remove('hidden');
                             document.getElementById('dashboardSection').classList.add('hidden');
@@ -142,9 +214,36 @@
                     window.logout = () => auth.signOut();
 
                 } catch (e) {
-                    statusEl.innerHTML = '❌ Error: ' + e.message;
-                    console.error(e);
+                    console.error('Init error:', e);
+                    updateStatus('❌ Failed to initialize');
+                    setupDemoMode();
                 }
+            })();
+
+            // Demo mode when Firebase fails
+            function setupDemoMode() {
+                updateStatus('🔧 Running in demo mode');
+                
+                document.getElementById('loginBtn').onclick = () => {
+                    const email = document.getElementById('email').value || 'demo@user.com';
+                    showError('Demo mode: Use any email/password');
+                    
+                    // Simulate login
+                    setTimeout(() => {
+                        document.getElementById('loginSection').classList.add('hidden');
+                        document.getElementById('dashboardSection').classList.remove('hidden');
+                        document.getElementById('welcomeMsg').innerHTML = `
+                            <strong>Demo Mode</strong><br>
+                            ${email}
+                        `;
+                        statusEl.classList.add('hidden');
+                    }, 500);
+                };
+                
+                window.logout = () => {
+                    document.getElementById('loginSection').classList.remove('hidden');
+                    document.getElementById('dashboardSection').classList.add('hidden');
+                };
             }
         })();
     </script>
